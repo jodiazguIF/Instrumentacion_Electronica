@@ -1,4 +1,9 @@
 #include <Arduino.h>
+#include "Arduino_LED_Matrix.h"   // Include the LED_Matrix library
+#include "frames.h.cpp"               // Include a header file containing some custom icons
+
+ArduinoLEDMatrix matrix;          // Create an instance of the ArduinoLEDMatrix class
+
 
 // variables varias no sé
 float lectura_Termistor = A1; // Seleccionamos el Pin A0 para leer los datos correspondientes al voltaje
@@ -16,7 +21,9 @@ float set_temperature = 25; //°C
 
 void setup() {
   Serial.begin(9600);
+  matrix.begin();                 // Initialize the LED matrix
   pinMode(5,OUTPUT);
+  matrix.loadFrame(LEDMATRIX_HEART_BIG);
 }
 
 void loop() {
@@ -43,6 +50,3 @@ void loop() {
   Serial.println(temperatura_actual); // Envia un mensaje a Python con el valor de la temperatura
   delay(10);
 }
-  
-
-// put function definitions here:
