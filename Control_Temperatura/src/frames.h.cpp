@@ -23,17 +23,3 @@ const uint32_t heart[] = {
 	0x44042081,
 	0x100a0040
 };
-
-const uint32_t twenty[]= {
-	
-
-};
-
-
-/*
-const uint32_t fullOn[] = {
-	0xffffffff,
-	0xffffffff,
-	0xffffffff
-}
-*/
