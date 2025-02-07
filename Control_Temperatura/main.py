@@ -30,7 +30,7 @@ def input_usuario():
 # Crear la ventana de Tkinter
 root = tk.Tk()
 root.title("Control de Temperatura")
-root.geometry("600x500")
+root.geometry("700x600")
 
 # Etiqueta y campo de entrada para la altura deseada
 label_entrada = tk.Label(root, text="Temperatura deseada en °C:")
@@ -44,12 +44,25 @@ boton_actualizar = tk.Button(root, text="Actualizar Temperatura", command=actual
 boton_actualizar.pack(pady=10)    
 
 # Lienzo para la gráfica
-canvas = tk.Canvas(root, width=500, height=200, bg="white")
+canvas = tk.Canvas(root, width=600, height=300, bg="white")
 canvas.pack(pady=20)
 
+# Caja para mostrar la temperatura actual
+label_temp_actual = tk.Label(root, text="Temperatura Actual: 0 °C", font=("Arial", 16), fg="red")
+label_temp_actual.pack(pady=10)
+
 # Variables para la gráfica
-x_pos = 0
-last_temp = 0
+x_pos = 50
+last_temp = 150
+
+# Dibujar ejes
+canvas.create_line(40, 10, 40, 200, fill="black", width=2)  # Eje Y
+canvas.create_line(40, 200, 600, 200, fill="black", width=2)  # Eje X
+
+# Etiquetas de temperatura en el eje Y
+for i in range(0, 110, 10):
+    y_pos = 200 - (i * 1.5)
+    canvas.create_text(25, y_pos, text=str(i), fill="black", font=("Arial", 8))
 
 # Función para actualizar la gráfica
 def graficar_temp():
@@ -59,17 +72,26 @@ def graficar_temp():
     except ValueError:
         temp_actual = last_temp
 
+    # Actualizar la etiqueta de temperatura actual
+    label_temp_actual.config(text=f"Temperatura Actual: {temp_actual:.1f} °C")
+
     # Dibujar línea en la gráfica
-    y_pos = 200 - (temp_actual * 2)  # Escalar temperatura a la altura del canvas
+    y_pos = 200 - (temp_actual * 1.5)  # Escalar temperatura a la altura del canvas
     if 0 <= y_pos <= 200:
-        canvas.create_line(x_pos, last_temp, x_pos + 5, y_pos, fill="blue", width=2)
+        canvas.create_line(x_pos, last_temp, x_pos + 5, y_pos, fill="red", width=2)
         last_temp = y_pos
         x_pos += 5
 
     # Limpiar la gráfica si se sale del ancho del canvas
-    if x_pos > 500:
+    if x_pos > 600:
         canvas.delete("all")
-        x_pos = 0
+        # Redibujar los ejes
+        canvas.create_line(40, 10, 40, 200, fill="black", width=2)  # Eje Y
+        canvas.create_line(40, 200, 600, 200, fill="black", width=2)  # Eje X
+        for i in range(0, 110, 10):
+            y_pos = 200 - (i * 1.5)
+            canvas.create_text(25, y_pos, text=str(i), fill="black", font=("Arial", 8))
+        x_pos = 50
 
     root.after(500, graficar_temp)  # Llamar a la función cada 500 ms
 
@@ -82,7 +104,7 @@ def main_cycle():
     while True:
         try:
             temperatura_actual = arduino.readline().decode('utf-8').strip()  # Lee el valor desde Arduino, este ya es el valor de temperatura actual
-            print(temperatura_actual)
+            #print(temperatura_actual)
             arduino.write(f"{entrada}\n".encode())  #Se envía el dato de temperatura deseado a Python
         except KeyboardInterrupt:
             print("Interrumpido por el usuario")
