@@ -22,7 +22,7 @@ float set_temperature = 25; //°C
 void setup() {
   Serial.begin(9600);
   matrix.begin();                 // Initialize the LED matrix
-  pinMode(5,OUTPUT);
+  pinMode(6,OUTPUT);
   matrix.loadFrame(LEDMATRIX_HEART_BIG);
 }
 
@@ -35,7 +35,7 @@ void loop() {
     voltaje_Termistor += 5*lectura_PinTermistor/1024-0.232*5*lectura_PinTermistor/1024;      // Se convierte el valor digital a un valor numérico
   }
   voltaje_Promedio = voltaje_Termistor/5; //Se calcula el voltaje promedio de las lecturas de voltaje
-  float temperatura_actual =  48.656 * voltaje_Promedio - 4.35; //Funcion para hallar la temperatura asumiendo B=3100 del termistor
+  float temperatura_actual =  41.5532 * voltaje_Promedio - 6.85; //Funcion para hallar la temperatura asumiendo B=3100 del termistor
   float error = set_temperature - temperatura_actual+0.5;  //Calcula el error
   // Calcular el tiempo entre ciclos
   float deltaTime = 0.01;
@@ -44,7 +44,7 @@ void loop() {
   float derivative = (error - prevError) / deltaTime;             //Calculamos la derivada
   float output = kp * error + ki * integral + kd * derivative ;    //Calculamos la salida PID
   output = constrain(output, 0, 255);                             //Limitar salida al rango del PWM (0 a 255)
-  analogWrite(5,int(output));                                     //Salida de PWM en función del PID
+  analogWrite(6,int(output));                                     //Salida de PWM en función del PID
   //Actualizar las variables previas
   prevError = error;  
   Serial.println(temperatura_actual); // Envia un mensaje a Python con el valor de la temperatura
