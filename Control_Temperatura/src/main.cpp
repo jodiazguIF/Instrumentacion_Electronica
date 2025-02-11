@@ -32,10 +32,10 @@ void loop() {
   float voltaje_Termistor = 0 ; //Reinicio del valor del voltaje
   for (int i = 0; i < 6; i++){
     lectura_PinTermistor = analogRead(lectura_Termistor); // Se lee el valor en el pin A0
-    voltaje_Termistor += 5*lectura_PinTermistor/1024-0.242*5*lectura_PinTermistor/1024;      // Se convierte el valor digital a un valor numérico
+    voltaje_Termistor += 5*lectura_PinTermistor/1024-0.232*5*lectura_PinTermistor/1024;      // Se convierte el valor digital a un valor numérico
   }
   voltaje_Promedio = voltaje_Termistor/5; //Se calcula el voltaje promedio de las lecturas de voltaje
-  float temperatura_actual =  48.086 * voltaje_Promedio - 3.612; //Funcion para hallar la temperatura asumiendo B=3100 del termistor
+  float temperatura_actual =  48.656 * voltaje_Promedio - 4.35; //Funcion para hallar la temperatura asumiendo B=3100 del termistor
   float error = set_temperature - temperatura_actual+0.5;  //Calcula el error
   // Calcular el tiempo entre ciclos
   float deltaTime = 0.01;
