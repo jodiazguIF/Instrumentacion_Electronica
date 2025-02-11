@@ -17,8 +17,4 @@ void setup() {
 }
 
 void loop() {
-  
-
 }
-
-// put function definitions here:
