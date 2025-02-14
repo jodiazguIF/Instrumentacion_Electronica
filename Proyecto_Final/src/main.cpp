@@ -2,98 +2,127 @@
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
 
-LiquidCrystal_I2C lcd(0x27,20,4); //set the LCD address to 0x27 for a 16 chars and 2 line display (Hace cosas)
-const int pulsadorUp = 4; //Se asignan los pines adeucados a los pulsadores
-const int pulsadorSelect = 2;
-const int pulsadorDown = 3;
-int menu_Actual = 0 ; //Variable para llevar trazo del menú actal
-bool botonUpPresionado = false ;
-bool botonDowmPresionado = false;
+LiquidCrystal_I2C lcd(0x27,20,4); // LCD 20x4 con dirección 0x27
+const int Clock = 2;  
+const int Data = 3;
+const int Switch = 4;
+int menu_Actual = 0;
+int estado_ActualClock;
+int estado_PrevioClock;
+float peso_Contador = 0.1; // Kilogramos
+String peso_lcd = "0.1";
 
 void mostrar_Menu(){
   lcd.clear();
-  switch (menu_Actual)
-  {
-  case 0:
-    lcd.setCursor(5,0);                   //Se elige dónde iniciar el texto
-    lcd.print("Bienvenido");              //Mensaje en la primera línea
-    lcd.setCursor(0,1);                   //Se elige dónde iniciar la segunda línea
-    lcd.print("Peso de tu mascota <");
-    lcd.setCursor(3,2);
-    lcd.print("Comidas al dia");
-    lcd.setCursor(6,3);
-    lcd.print("Avanzado");
-    break;
-  case 1:
-    lcd.setCursor(5,0);                   //Se elige dónde iniciar el texto
-    lcd.print("Bienvenido");              //Mensaje en la primera línea
-    lcd.setCursor(0,1);                   //Se elige dónde iniciar la segunda línea
-    lcd.print("Peso de tu mascota");
-    lcd.setCursor(3,2);
-    lcd.print("Comidas al dia  <");
-    lcd.setCursor(6,3);
-    lcd.print("Avanzado");
-    break;
-  case 2:
-    lcd.setCursor(5,0);                   //Se elige dónde iniciar el texto
-    lcd.print("Bienvenido");              //Mensaje en la primera línea
-    lcd.setCursor(0,1);                   //Se elige dónde iniciar la segunda línea
-    lcd.print("Peso de tu mascota");
-    lcd.setCursor(3,2);
-    lcd.print("Comidas al dia");
-    lcd.setCursor(6,3);
-    lcd.print("Avanzado     <");
-    break;
-  case 3:
-    lcd.clear();
-    lcd.setCursor(5,0);
-    lcd.print("Peso en Kg");
-    //Aquí debería ir el contador  
-    break;
+  switch (menu_Actual) {
+    case 0:
+      lcd.setCursor(5,0);
+      lcd.print("Bienvenido");
+      lcd.setCursor(0,1);
+      lcd.print("Peso de tu mascota <");
+      lcd.setCursor(3,2);
+      lcd.print("Comidas al dia");
+      lcd.setCursor(6,3);
+      lcd.print("Avanzado");
+      break;
+    case 1:
+      lcd.setCursor(5,0);
+      lcd.print("Bienvenido");
+      lcd.setCursor(0,1);
+      lcd.print("Peso de tu mascota");
+      lcd.setCursor(3,2);
+      lcd.print("Comidas al dia  <");
+      lcd.setCursor(6,3);
+      lcd.print("Avanzado");
+      break;
+    case 2:
+      lcd.setCursor(5,0);
+      lcd.print("Bienvenido");
+      lcd.setCursor(0,1);
+      lcd.print("Peso de tu mascota");
+      lcd.setCursor(3,2);
+      lcd.print("Comidas al dia");
+      lcd.setCursor(6,3);
+      lcd.print("Avanzado     <");
+      break;
+    case 3:
+      lcd.setCursor(5,0);
+      lcd.print("Peso en Kg");
+      lcd.setCursor(9,1);
+      lcd.print(peso_lcd);
+      lcd.setCursor(1,3);
+      lcd.print("Pulsa para elegir");
+      break;
   }
-};
+}
 
 void setup() {
-  pinMode(pulsadorUp, INPUT);//Se asigna el modo de función de los pines que usarán los pulsadores
-  pinMode(pulsadorSelect, INPUT);
-  pinMode(pulsadorDown, INPUT);
+  pinMode(Clock, INPUT);
+  pinMode(Data, INPUT);
+  pinMode(Switch, INPUT_PULLUP); // Pull-up interno para el botón
 
-  lcd.init(); //Se inicia la pantalla lcd
-  lcd.backlight();//Mejora la visibilidad del texto
-
-  mostrar_Menu(); //Muestra el menú inicial
+  estado_PrevioClock = digitalRead(Clock);
+  
+  lcd.init();
+  lcd.backlight();
+  mostrar_Menu();
 }
 
 void loop() {
-  if (digitalRead(pulsadorUp) == HIGH ){
-    if(menu_Actual == 0){
-      menu_Actual = 2 ; 
-    }else if(menu_Actual <= 2 && menu_Actual > 0){
-      menu_Actual -= 1 ;
+  estado_ActualClock = digitalRead(Clock); // Lectura del Clock
+
+  // **Rotación detectada** (Flanco de subida)
+  if (estado_ActualClock != estado_PrevioClock && estado_ActualClock == HIGH) {
+    if (menu_Actual <= 2) {  // Solo modifica si está en 0, 1 o 2
+      if (digitalRead(Data) == HIGH) { 
+        // **Giro en sentido horario (CW)**
+        menu_Actual++;
+        if (menu_Actual > 2) menu_Actual = 0;  // Vuelve a 0 después de 2
+      } else {
+        // **Giro en sentido antihorario (CCW)**
+        if (menu_Actual > 0) {
+          menu_Actual--;
+        } else {
+          menu_Actual = 2;  // Si está en 0, regresa a 2
+        }
+      }
+      mostrar_Menu(); // Actualiza la pantalla solo cuando cambia el menú
     }
-    mostrar_Menu(); //Se llama la función que muestra los menús
-    delay(200); //Evita rebotes
-  };
-  if (digitalRead(pulsadorDown)==HIGH){
-    if(menu_Actual == 2){
-      menu_Actual = 0;
-    }
-    else if(menu_Actual >= 0 && menu_Actual < 2){
-      menu_Actual +=  1;
-    }
-    mostrar_Menu();
-    delay(200);
   }
-  if(digitalRead(pulsadorSelect) == HIGH && menu_Actual == 0){
+
+  // **Botón presionado (para entrar al menú 3)**
+  if (digitalRead(Switch) == HIGH && menu_Actual == 0) {
     menu_Actual = 3;
     mostrar_Menu();
-    delay(200);
+    delay(300);  // Evita doble detección del botón
   }
-  if(digitalRead(pulsadorDown)==HIGH && digitalRead(pulsadorUp)==HIGH){
+
+  // **Manejo del peso en menú 3**
+  if (menu_Actual == 3 && estado_ActualClock != estado_PrevioClock && estado_ActualClock == HIGH) {
+    bool pesoCambiado = false;
+
+    if (digitalRead(Data) == HIGH) { 
+      if (peso_Contador > 0.1){
+      peso_Contador -= 0.1; // Disminuye peso
+      pesoCambiado = true;
+      }
+    } else { 
+        peso_Contador += 0.1; // Aumenta peso
+        pesoCambiado = true;
+      }
+
+    if (pesoCambiado) {
+      peso_lcd = String(peso_Contador, 1); // Convierte a String con 1 decimal
+      mostrar_Menu(); // Actualiza solo cuando cambia el peso
+    }
+  }
+
+  // **Salir del menú 3 con el botón**
+  if (menu_Actual == 3 && digitalRead(Switch) == HIGH) {
     menu_Actual = 0;
     mostrar_Menu();
-    delay(200);
+    delay(300); // Evita rebotes
   }
-  
-};
 
+  estado_PrevioClock = estado_ActualClock; // Guarda el estado anterior
+}
