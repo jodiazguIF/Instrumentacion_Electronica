@@ -1,49 +1,63 @@
 #include <Arduino.h>
 #include <analogWave.h> // Librería para generar las ondas análogas
 
+// Parámetros de la onda
+float frecuencia_Portadora = 1000;   // Frecuencia de la onda portadora en Hz
+float frecuencia_Modulada = 100;     // Frecuencia de la onda modulada en Hz
+const int tasa_Muestreo = 200;       // Tasa de muestreo
+float t_delta = 1 / (frecuencia_Modulada * tasa_Muestreo); // Paso temporal
+float amplitud_OndaPortadora = 1.0;  // Amplitud de la onda portadora
+float amplitud_OndaModulada = 0.9;   // Amplitud de la onda modulada
+uint16_t muestras[tasa_Muestreo - 1] = {0}; // Array de muestras
 
-// Se crea una instancia de tipo onda análoga, usando el pin DAC
-const uint16_t frecuencia_Portadora = 1000;   //  Frecuencia de la onda portadora en Hz
-const uint16_t frecuencia_Modulada = 100;     // Frecuencia de la onda modulada en Hz
-const uint16_t tasa_Muestreo = 200;           // Same as analogWaveMod
-float t_delta = 1/(frecuencia_Modulada*tasa_Muestreo); // Paso temperal entre muestras
-float amplitud_OndaPortadora = 1.0; // Amplitud de la onda portadora
-float amplitud_OndaModulada = 0.9; // Amplitude de la onda modulada
-uint16_t muestras[tasa_Muestreo-1] = {0};  //Array que almacena las muestras de la señal AM 
+// Se declara la onda como variable global
+static analogWave wave(DAC, muestras, tasa_Muestreo - 1, 0);
 
-void generateSamples(uint16_t* array){
-  //Esta función calcula y almacena las muestras de la señal AM en el array muestras{}
-  float tiempo = 0; //Controla el tiempo de muestreo
-  float valores_Portadora = 0; // Contiene los valores dsicretos de la onda portadora
-  float valores_Modulada = 0; // Contiene los valores dsicretos de la onda modulada
-  float valores_SeñalAM = 0; // Contiene los valores dsicretos de la onda AM completa
-  float amplitud_AM = amplitud_OndaModulada + amplitud_OndaPortadora;
-
-  for(int i = 0; i < tasa_Muestreo-1; i++){
-    valores_Portadora= amplitud_OndaPortadora*cos(2*PI*frecuencia_Portadora*tiempo);
-    valores_Modulada = amplitud_OndaModulada*cos(2*PI*frecuencia_Modulada*tiempo);
-
-    valores_SeñalAM = (1+amplitud_OndaModulada)*amplitud_OndaPortadora+amplitud_AM;// Muestreo de la señal AM
-    valores_SeñalAM = valores_SeñalAM/(2*amplitud_AM); // Señal AM normalizada
-    valores_SeñalAM = (valores_SeñalAM*1000 - 0) * (43253 - 11873) / (1000 - 0) + 11873;
-    array[i] = (uint16_t) valores_SeñalAM;  // Almacena los valores de la señal AM en el buffer
-    // Serial.println( array[i]);
-    // delay(100);
-    tiempo = tiempo + t_delta;
-  }
-}
+// Prototipo de función
+void generateSamples(uint16_t* array);
 
 void setup() {
-  Serial.begin(115200);       // 115200 baudios para la comunicación serial
-  generateSamples(muestras);  // Se llama la función que llena el array de muestras
+  Serial.begin(9600);
+  while (!Serial);  // Espera a que el puerto serial esté listo
+  Serial.println("Arduino iniciado...");
+
+  generateSamples(muestras); // Genera la señal AM
+  pinMode(A1, INPUT);
+  pinMode(A2, INPUT);
+
+  wave.begin(frecuencia_Portadora); // Se inicia la generación de la onda
+  Serial.println("Generador de onda iniciado...");
 }
 
 void loop() {
-  static analogWave wave(DAC, muestras,tasa_Muestreo-1,0); // DAD (Usa el DAC del micro), muestras (Apunt al buffer de la señal AM), tasa_Muestreo (Número de muestras en el Buffer) , 0 (Sin desplazamiento de fase) 
-  wave.begin(frecuencia_Portadora); //Genera la onda AM a la frecuencia de la onda portadora
-  int input_A1 = analogRead(A1);  //Se lee la señal demodulada del amplificador operacional
-  float voltage_A1 = input_A1 * (5.0 / 1023.0); //Se convierte el input análogo que está entre 0-1023 a voltaje
-  Serial.println(voltage_A1);   //Se envía al serial el valor de voltaje
-  delay(5);
+  float input_OndaRecibida = analogRead(A1);
+  float voltaje_OndaRecibida = input_OndaRecibida * (5.0 / 1023.0);
+  float input_OndaGenerada = analogRead(A2);
+  float voltaje_OndaGenerada = input_OndaGenerada * (5.0 / 1023.0);
+
+  // Envío de datos en formato CSV para Python
+  Serial.print(voltaje_OndaGenerada, 4);
+  Serial.print(",");
+  Serial.println(voltaje_OndaRecibida, 4);
+  delay(5);  // Pequeño delay para evitar saturación del puerto serial
 }
 
+void generateSamples(uint16_t* array) {
+  float tiempo = 0;
+  float valores_Portadora = 0;
+  float valores_Modulada = 0;
+  float valores_SenalAM = 0;
+  float amplitud_AM = amplitud_OndaModulada + amplitud_OndaPortadora;
+
+  for (int i = 0; i < tasa_Muestreo - 1; i++) {
+    valores_Portadora = amplitud_OndaPortadora * cos(2 * PI * frecuencia_Portadora * tiempo);
+    valores_Modulada = amplitud_OndaModulada * cos(2 * PI * frecuencia_Modulada * tiempo);
+
+    valores_SenalAM = (1 + valores_Modulada) * valores_Portadora + amplitud_AM;
+    valores_SenalAM = valores_SenalAM / (2 * amplitud_AM); // Normalización
+    valores_SenalAM = (valores_SenalAM * 1000 - 0) * (43253 - 11873) / (1000 - 0) + 11873;
+    array[i] = (uint16_t) valores_SenalAM;  // Almacena la muestra
+
+    tiempo += t_delta;
+  }
+}
