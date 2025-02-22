@@ -12,9 +12,9 @@ arduino = serial.Serial("COM6", 9600)
 time.sleep(2)
 
 # Parámetros globales
-delta_tiempo = 1 / 2000
-buffer_size = 2000  # Máximo de datos en las listas
-ventana_fft = 2000  # Tamaño de la ventana de la FFT
+delta_tiempo = 1 / 2000     
+buffer_size = 2000          # Máximo de datos en las listas
+ventana_fft = 2000          # Tamaño de la ventana de la FFT
 delta_frecuencia = 1 / (ventana_fft * delta_tiempo)  # Resolución espectral
 
 # Buffers de datos
@@ -87,8 +87,9 @@ def procesar_fft():
         time.sleep(0.5)
         if len(x_Recibida) >= ventana_fft:
             datos_fft = np.array(x_Recibida)[-ventana_fft:]  # Últimos datos
-            transformada = np.fft.fftshift(np.fft.fft(datos_fft))  # FFT
-            x_FourierRecibida = np.abs(transformada[:ventana_fft // 2])  # Solo parte positiva
+            transformada = np.fft.fft(datos_fft)
+            x_FourierRecibida = np.abs(transformada[:ventana_fft // 2])
+
 
 # Hilo de simulación de datos
 def main_Cycle():
@@ -96,11 +97,11 @@ def main_Cycle():
     while True:
         try:
             datos_Arduino = arduino.readline().decode().strip()
+            time.sleep(0.002)
             if datos_Arduino:
                 array_Datos = list(map(float, datos_Arduino.split(",")))
                 if len(array_Datos) < 2:
                     continue
-
                 tiempo.append(time.time() - tiempo_inicio)
                 x_Generada.append(array_Datos[0])
                 x_Recibida.append(array_Datos[1])
