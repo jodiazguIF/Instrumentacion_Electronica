@@ -1,5 +1,9 @@
 #include <Arduino.h>
+#include "Arduino_LED_Matrix.h"   // Include the LED_Matrix library
 #include <analogWave.h> // Librería para generar las ondas análogas
+#include "frames.h.cpp" // Include a header file containing some custom icons
+
+ArduinoLEDMatrix matrix;          // Create an instance of the ArduinoLEDMatrix class
 
 // Parámetros de la onda
 float frecuencia_Portadora = 1000;   // Frecuencia de la onda portadora en Hz
@@ -7,7 +11,7 @@ float frecuencia_Modulada = 100;     // Frecuencia de la onda modulada en Hz
 const int tasa_Muestreo = 200;       // Tasa de muestreo
 float t_delta = 1 / (frecuencia_Modulada * tasa_Muestreo); // Paso temporal
 float amplitud_OndaPortadora = 1.0;  // Amplitud de la onda portadora
-float amplitud_OndaModulada = 0.9;   // Amplitud de la onda modulada
+float amplitud_OndaModulada = 1.0;   // Amplitud de la onda modulada
 uint16_t muestras[tasa_Muestreo - 1] = {0}; // Array de muestras
 
 // Se declara la onda como variable global
@@ -22,11 +26,12 @@ void setup() {
   Serial.println("Arduino iniciado...");
 
   generateSamples(muestras); // Genera la señal AM
-  pinMode(A1, INPUT);
-  pinMode(A2, INPUT);
+  pinMode(A1, INPUT); //El pin A1 registra la onda recibida
+  pinMode(A2, INPUT); //El pin A2 registra la onda generada
 
   wave.begin(frecuencia_Portadora); // Se inicia la generación de la onda
-  Serial.println("Generador de onda iniciado...");
+  matrix.begin(); 
+  matrix.loadFrame(LEDMATRIX_HEART_BIG);
 }
 
 void loop() {
@@ -39,7 +44,7 @@ void loop() {
   Serial.print(voltaje_OndaGenerada, 4);
   Serial.print(",");
   Serial.println(voltaje_OndaRecibida, 4);
-  delay(5);  // Pequeño delay para evitar saturación del puerto serial
+  delay(10);  // Pequeño delay para evitar saturación del puerto serial
 }
 
 void generateSamples(uint16_t* array) {
@@ -61,3 +66,5 @@ void generateSamples(uint16_t* array) {
     tiempo += t_delta;
   }
 }
+ /*Holas, la de fucking comentar no me la sé
+ */
