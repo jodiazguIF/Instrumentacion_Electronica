@@ -1,13 +1,16 @@
 #include <Arduino.h>
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
-
+ 
+// A4 SDA
+// A5 SCL
 LiquidCrystal_I2C lcd(0x27,20,4); // LCD 20x4 con dirección 0x27
 const int Clock = 2;        //Pin Clock Encoder  
 const int Data = 3;         //Pin Data Encoder
 const int Switch = 4;       //Pin Switch Encoder
-const int derecha_GiroMotor = 5;  //Control de giro del motor
-const int izquierda_GiroMotor = 6;//Control de giro del motor
+const int GiroMotor = 5;  //Control de giro del motor
+const int pin_Galga = A6;
+float lectura_galga = 0;
 int menu_Actual = 0;        //Se usa para llevar rastro de los menús
 int estado_ActualClock;     //Se utiliza para almacenar el estado actual del clock del encoder
 int estado_PrevioClock;     //Se utiliza para almacenar el estado previo del clock del encoder y ser capaces de comparar un cambio de estado
@@ -88,9 +91,11 @@ void mostrar_Menu(String hora){
 }
 
 void setup() {
+  Serial.begin(9600);
   pinMode(Clock, INPUT);         // Se asigna el pin del Clock como Input
   pinMode(Data, INPUT);          // Se asigna el pin del Data como input
   pinMode(Switch, INPUT_PULLUP); // Pull-up interno para el botón, se asigna el pin del switch como input
+  pinMode(pin_Galga, INPUT);
   estado_PrevioClock = digitalRead(Clock);  //Se verifica el estado actual del clock para tener una referencia adecuada para la primera medida
   lcd.init();       //Se inicia el protocolo de comunicación con la pantalla LCD
   lcd.backlight();  //Se enciende las luz de fondo
@@ -152,7 +157,13 @@ void loop() {
     mostrar_Menu(obtener_HoraString(hora_Global, minuto_Global));
     delay(10); // Evita rebotes
   }
-
-
   estado_PrevioClock = estado_ActualClock; // Guarda el estado anterior
+  lectura_galga = 0;
+  for (int i = 0; i < 50; i++){
+    lectura_galga+=analogRead(pin_Galga);
+  }
+  lectura_galga = lectura_galga/50;
+  lectura_galga = lectura_galga*5/1023;
+  Serial.println(lectura_galga);
+  delay(100);
 }
